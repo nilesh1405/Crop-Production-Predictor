@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: crop-prediction-app
+    env: python
+    python_version: "3.10"
+    buildCommand: pip install -r requirements.txt
+    startCommand: python app.py

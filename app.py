@@ -5,8 +5,13 @@ import pandas as pd
 import os
 
 app = Flask(__name__)
-CORS(app)   # <-- Enable CORS for all endpoints
-
+CORS(app, supports_credentials=True, resources={
+    r"/api/*": {
+        "origins": "*",
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization"]
+    }
+})
 # ---------------- Load model ----------------
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
 pipeline = joblib.load(model_path)

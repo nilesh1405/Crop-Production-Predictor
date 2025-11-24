@@ -1,7 +1,6 @@
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, jsonify
 import joblib
 import pandas as pd
-import numpy as np
 import os
 
 app = Flask(__name__)
@@ -25,10 +24,10 @@ def predict_production(state, district, season, crop, area):
     df_input["Area"] = clean_numeric(df_input["Area"])
     return float(pipeline.predict(df_input)[0])
 
-# ---------------- Routes ----------------
+# ---------------- Web Routes ----------------
 @app.route('/')
 def home():
-    return render_template("index.html")  # Use correct folder: templates/index.html
+    return render_template("index.html")
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -43,10 +42,40 @@ def predict():
     except:
         return render_template("index.html", prediction_text="Invalid Area value!")
 
-    prediction = predict_production(state, district, season, crop, area)
+    try:
+        prediction = predict_production(state, district, season, crop, area)
+    except Exception as e:
+        return render_template("index.html", prediction_text=f"Error: {str(e)}")
+
     return render_template("index.html", prediction_text=f"Predicted Production: {prediction:.2f}")
 
-# ---------------- Run app ----------------
+# ---------------- API Route ----------------
+@app.route('/api/predict', methods=['POST'])
+def api_predict():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "JSON body required"}), 400
+
+    state = data.get("State_Name")
+    district = data.get("District_Name")
+    season = data.get("Season")
+    crop = data.get("Crop")
+    area = data.get("Area")
+
+    # Validate area
+    try:
+        area = float(area)
+    except:
+        return jsonify({"error": "Invalid Area value!"}), 400
+
+    try:
+        prediction = predict_production(state, district, season, crop, area)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"Predicted_Production": round(prediction, 2)})
+
+# ---------------- Run App ----------------
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)

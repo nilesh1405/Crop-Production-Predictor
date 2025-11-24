@@ -1,9 +1,11 @@
 from flask import Flask, request, render_template, jsonify
+from flask_cors import CORS
 import joblib
 import pandas as pd
 import os
 
 app = Flask(__name__)
+CORS(app)   # <-- Enable CORS for all endpoints
 
 # ---------------- Load model ----------------
 model_path = os.path.join(os.path.dirname(__file__), "model.pkl")
@@ -62,7 +64,6 @@ def api_predict():
     crop = data.get("Crop")
     area = data.get("Area")
 
-    # Validate area
     try:
         area = float(area)
     except:
